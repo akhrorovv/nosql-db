@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:nosql_db/services/hive_service.dart';
 
 import '../models/credit_card_model.dart';
 
@@ -53,12 +54,14 @@ class _DetailsPageState extends State<DetailsPage> {
       } else {
         return;
       }
-      backToFinish(creditCard);
+
+      HiveService.saveCreditCard(creditCard);
+      backToFinish();
     });
   }
 
-  backToFinish(CreditCard creditCard) {
-    Navigator.of(context).pop(creditCard);
+  backToFinish() {
+    Navigator.of(context).pop(true);
   }
 
   String getCardType() {

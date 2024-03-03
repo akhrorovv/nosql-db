@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nosql_db/services/hive_service.dart';
 
 import '../models/credit_card_model.dart';
 import 'details_page.dart';
@@ -11,23 +12,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<CreditCard> cards = [
-    CreditCard(
-      cardNumber: '0000 0000 0000 0000',
-      expiredDate: '12/12',
-      cardType: 'master',
-      cardImage: 'assets/images/ic_card_master.png',
-    ),
-    CreditCard(
-      cardNumber: '8888 8888 8888 8888',
-      expiredDate: '25/25',
-      cardType: 'visa',
-      cardImage: 'assets/images/ic_card_visa.png',
-    ),
-  ];
+  List cards = [];
 
   Future openDetailsPage() async {
-    CreditCard result = await Navigator.of(context).push(
+    var result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (BuildContext context) {
           return const DetailsPage();
@@ -35,11 +23,25 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    setState(() {
-      cards.add(result);
-    });
+    // setState(() {
+    //   cards.add(result);
+    // });
 
-    // loadCards();
+    loadCards();
+  }
+
+  loadCards() {
+    var myCards = HiveService.getAllCreditCards();
+    setState(() {
+      cards = myCards;
+    });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    loadCards();
   }
 
   @override
@@ -51,12 +53,16 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Expanded(
-              child: ListView.builder(
-                itemCount: cards.length,
-                itemBuilder: (ctx, i) {
-                  return _itemOfCardList(cards[i]);
-                },
-              ),
+              child: cards.isEmpty
+                  ? const Center(
+                      child: Text('No Cards'),
+                    )
+                  : ListView.builder(
+                      itemCount: cards.length,
+                      itemBuilder: (ctx, i) {
+                        return _itemOfCardList(cards[i], i);
+                      },
+                    ),
             ),
             Container(
               width: double.infinity,
@@ -81,9 +87,53 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _itemOfCardList(CreditCard card) {
+  deleteCard(int index) async {
+    setState(() {
+      cards.removeAt(index);
+      HiveService.deleteCreditCardByIndex(index);
+    });
+  }
+
+  openDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext buildContext) {
+        return AlertDialog(
+          title: const Text("Delete card"),
+          content: const Text("Are you sure you want to delete card?"),
+          actions: [
+            MaterialButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+            MaterialButton(
+              onPressed: () {
+                setState(() {
+                  deleteCard(index);
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _itemOfCardList(CreditCard card, int index) {
     return GestureDetector(
-      onLongPress: () {},
+      onLongPress: () {
+        openDialog(index);
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(5),
