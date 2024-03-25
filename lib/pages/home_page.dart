@@ -23,9 +23,20 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    // setState(() {
-    //   cards.add(result);
-    // });
+    loadCards();
+  }
+
+  Future openUpdatePage(CreditCard creditCard) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (BuildContext context) {
+          return DetailsPage(
+            creditCard: creditCard,
+            index: cards.indexOf(creditCard),
+          );
+        },
+      ),
+    );
 
     loadCards();
   }
@@ -133,6 +144,9 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onLongPress: () {
         openDialog(index);
+      },
+      onTap: () {
+        openUpdatePage(card);
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),

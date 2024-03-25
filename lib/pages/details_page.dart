@@ -5,7 +5,10 @@ import 'package:nosql_db/services/hive_service.dart';
 import '../models/credit_card_model.dart';
 
 class DetailsPage extends StatefulWidget {
-  const DetailsPage({super.key});
+  final CreditCard? creditCard;
+  final int? index;
+
+  const DetailsPage({super.key, this.creditCard, this.index});
 
   @override
   State<DetailsPage> createState() => _DetailsPageState();
@@ -29,13 +32,23 @@ class _DetailsPageState extends State<DetailsPage> {
     type: MaskAutoCompletionType.lazy,
   );
 
+  updateCard(CreditCard creditCard) {
+    setState(() {
+      if (widget.creditCard != null) {
+        HiveService.updateCreditCard(widget.index! - 1, creditCard);
+      } else {
+        HiveService.saveCreditCard(creditCard);
+      }
+    });
+  }
+
   saveCard() {
     setState(() {
       String cardNumber = cardNumberController.text;
       String expiredDate = expiredDateController.text;
 
       CreditCard creditCard =
-      CreditCard(cardNumber: cardNumber, expiredDate: expiredDate);
+          CreditCard(cardNumber: cardNumber, expiredDate: expiredDate);
 
       if (cardNumber.trim().isEmpty || cardNumber.length < 16) {
         return;
@@ -55,7 +68,8 @@ class _DetailsPageState extends State<DetailsPage> {
         return;
       }
 
-      HiveService.saveCreditCard(creditCard);
+      // HiveService.saveCreditCard(creditCard);
+      updateCard(creditCard);
       backToFinish();
     });
   }
@@ -78,7 +92,12 @@ class _DetailsPageState extends State<DetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.creditCard != null) {
+      cardNumber = widget.creditCard!.cardNumber!;
+      expiredDate = widget.creditCard!.expiredDate!;
+    }
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(title: const Text('Add Card')),
       body: Container(
         padding: const EdgeInsets.all(20),
@@ -183,6 +202,9 @@ class _DetailsPageState extends State<DetailsPage> {
                       ),
                       onChanged: (value) {
                         setState(() {
+                          if (widget.creditCard != null) {
+                            widget.creditCard?.cardNumber = value;
+                          }
                           cardNumber = value;
                         });
                       },
@@ -217,6 +239,9 @@ class _DetailsPageState extends State<DetailsPage> {
                       onChanged: (value) {
                         setState(() {
                           expiredDate = value;
+                          if (widget.creditCard != null) {
+                            widget.creditCard?.expiredDate = value;
+                          }
                         });
                       },
                       inputFormatters: [expiredDateMaskFormatter],
